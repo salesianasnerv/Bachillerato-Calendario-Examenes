@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Calendario de Exámenes - Bachillerato</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,17 +25,50 @@
             }
         }
     </script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@1.52.0/dist/umd/lucide.min.js"></script>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#009abb">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Exámenes MªAux">
-    <link rel="apple-touch-icon" href="icon-180.png">
-    <link rel="icon" href="icon-192.png">
+    <meta name="application-name" content="Exámenes MªAux">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+    <link rel="shortcut icon" href="favicon.ico">
 
     <style>
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+        body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); -webkit-tap-highlight-color: transparent; }
+        button, a, select, input, textarea { touch-action: manipulation; }
+
+        .modal-card { max-height: 92vh; max-height: 92dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+        .agenda-card { text-align: left; }
+        .agenda-clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* Móvil / tablet vertical: la rejilla de 7 columnas se sustituye por una agenda en lista */
+        @media (max-width: 767px) {
+            .fab-wrap { position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 30; padding: 0 !important; }
+            .fab-wrap button { border-radius: 9999px; padding: 0.85rem 1.25rem; box-shadow: 0 8px 20px rgba(0,122,148,.35); }
+            .nav-btn { padding: 0.65rem !important; }
+        }
+        @media (max-width: 639px) {
+            #toast-container { left: 1rem; right: 1rem; bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+            .toast { max-width: none; }
+            .modal-wrap { align-items: flex-end !important; padding: 0 !important; }
+            .modal-card { max-width: none !important; border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; border-top-left-radius: 1rem !important; border-top-right-radius: 1rem !important; padding: 1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom)) !important; }
+            /* 16px evita el zoom automático de iOS al enfocar un campo */
+            .modal-card input, .modal-card select, .modal-card textarea { font-size: 16px !important; min-height: 44px; }
+            .modal-card button { min-height: 40px; }
+            #class-filters button, #itinerary-filters button, #print-class-filters button, #print-itinerary-filters button { min-height: 36px; }
+        }
+        @media (display-mode: standalone) {
+            #install-btn { display: none !important; }
+        }
+
         #toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 100; display: flex; flex-direction: column; gap: 0.5rem; }
         .toast { padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,.15); max-width: 320px; }
         .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
@@ -364,11 +397,11 @@
                 subjects: {
                     "Lengua Castellana y Literatura I": {
                         "1º Bach A": ["Humanidades y Ciencias Sociales (Todos)", "Desdoble"],
-                        "1º Bach B": ["Ciencias y Tecnología (Todos)"]
+                        "1º Bach B": ["Ciencias y Tecnología (Todos)", "Ciencias", "Tecnología"]
                     },
                     "Lengua Castellana y Literatura II": {
                         "2º Bach A": ["Humanidades y Ciencias Sociales (Todos)", "Desdoble"],
-                        "2º Bach B": ["Ciencias y Tecnología (Todos)"]
+                        "2º Bach B": ["Ciencias y Tecnología (Todos)", "Ciencias", "Tecnología"]
                     },
                     "Ampliación de Lengua": {
                         "2º Bach A": ["Humanidades y Ciencias Sociales (Todos)"],
@@ -397,7 +430,9 @@
                 color: "bg-emerald-100 border-emerald-300 text-emerald-900",
                 subjects: {
                     "Biología": { "2º Bach B": ["Ciencias"] },
-                    "Biología, Geología y Ciencias Ambientales": { "1º Bach B": ["Ciencias"] }
+                    "Biología, Geología y Ciencias Ambientales": { "1º Bach B": ["Ciencias"] },
+                    "Anatomía Aplicada": { "1º Bach B": ["Ciencias"] },
+                    "Ciencias de la Tierra y del Medio Ambiente": { "2º Bach B": ["Ciencias"] }
                 }
             },
             "Margarita Luque Blanco": {
