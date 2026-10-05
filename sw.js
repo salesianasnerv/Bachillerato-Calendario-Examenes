@@ -1,42 +1,113 @@
-const CACHE_NAME = "examenes-mauxiliadora-v2";
-const APP_SHELL = ["index.html", "manifest.json", "icon-192.png", "icon-512.png"];
+const VERSION = "v3";
+const SHELL_CACHE = `examenes-shell-${VERSION}`;
+const CDN_CACHE = `examenes-cdn-${VERSION}`;
+
+const APP_SHELL = [
+  "index.html", "manifest.json",
+  "icon-180.png", "icon-192.png", "icon-512.png", "icon-maskable-512.png",
+  "favicon-32.png", "favicon-48.png", "favicon-192.png", "favicon.ico"
+];
+
+// Librerías y tipografías externas que usa la página: se guardan para que la app abra sin conexión.
+const CDN_HOSTS = ["cdn.tailwindcss.com", "unpkg.com", "fonts.googleapis.com", "fonts.gstatic.com"];
+const CDN_PRECACHE = ["https://cdn.tailwindcss.com", "https://unpkg.com/lucide@1.52.0/dist/umd/lucide.min.js"];
+const FONTS_CSS = "https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap";
+
+const NETWORK_TIMEOUT_MS = 4000;
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
+  event.waitUntil((async () => {
+    const shell = await caches.open(SHELL_CACHE);
+    const cdn = await caches.open(CDN_CACHE);
+    // allSettled: si falta algún archivo, la instalación no se rompe.
+    await Promise.allSettled([
+      ...APP_SHELL.map((url) => shell.add(url)),
+      ...CDN_PRECACHE.map((url) => precacheOpaque(cdn, url)),
+      precacheFonts(cdn)
+    ]);
+  })());
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== SHELL_CACHE && k !== CDN_CACHE).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-// Solo se cachea el "cascarón" estático de la web (mismo origen, GET).
-// Las llamadas a la API de Apps Script y a Google Calendar viajan siempre
-// directas a la red, nunca se sirven desde caché.
-//
-// Estrategia "red primero": se intenta siempre traer la versión más
-// reciente del servidor; la copia en caché solo se usa como respaldo si
-// no hay conexión. Así, al publicar cambios en la web, se ven de
-// inmediato en el siguiente recarga en vez de quedarse con una versión
-// vieja guardada en el dispositivo.
+async function precacheOpaque(cache, url) {
+  const req = new Request(url, { mode: "no-cors" });
+  await cache.put(req, await fetch(req));
+}
+
+// Guarda la hoja de estilos de Google Fonts y solo los tipos latinos (suficiente para español).
+async function precacheFonts(cache) {
+  const res = await fetch(FONTS_CSS);
+  const css = await res.clone().text();
+  await cache.put(FONTS_CSS, res);
+  const latinUrls = css.split("@font-face")
+    .filter((block) => block.includes("U+0000-00FF"))
+    .map((block) => (block.match(/url\((https:\/\/fonts\.gstatic\.com[^)]+)\)/) || [])[1])
+    .filter(Boolean);
+  await Promise.allSettled(latinUrls.map(async (url) => {
+    const font = await fetch(url);
+    if (font.ok) await cache.put(url, font);
+  }));
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
 
-  event.respondWith(
-    fetch(req)
-      .then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
-        return res;
-      })
-      .catch(() => caches.match(req))
-  );
+  if (url.origin === self.location.origin) {
+    event.respondWith(networkFirst(req));
+  } else if (CDN_HOSTS.includes(url.hostname)) {
+    event.respondWith(staleWhileRevalidate(event, req));
+  }
+  // Cualquier otra petición (API de Apps Script, Google Calendar...) va siempre directa a la red.
 });
+
+// Red primero: así los cambios publicados se ven en cuanto hay conexión.
+// Si la red tarda más de NETWORK_TIMEOUT_MS o no hay conexión, se usa la copia guardada.
+async function networkFirst(req) {
+  const cache = await caches.open(SHELL_CACHE);
+  const network = fetch(req).then((res) => {
+    if (res.ok) cache.put(req, res.clone());
+    return res;
+  });
+  network.catch(() => {});
+
+  const fromCache = async () =>
+    (await cache.match(req, { ignoreSearch: true })) ||
+    (req.mode === "navigate" ? await cache.match("index.html") : undefined);
+
+  try {
+    return await Promise.race([
+      network,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), NETWORK_TIMEOUT_MS))
+    ]);
+  } catch (err) {
+    const cached = await fromCache();
+    if (cached) return cached;
+    if (err.message === "timeout") return network;
+    return Response.error();
+  }
+}
+
+// Librerías externas: se sirve la copia guardada al instante y se actualiza en segundo plano.
+async function staleWhileRevalidate(event, req) {
+  const cache = await caches.open(CDN_CACHE);
+  const cached = await cache.match(req);
+  const refresh = fetch(req)
+    .then((res) => {
+      if (res && (res.ok || res.type === "opaque")) cache.put(req, res.clone());
+      return res;
+    })
+    .catch(() => undefined);
+  event.waitUntil(refresh);
+  return cached || (await refresh) || Response.error();
+}

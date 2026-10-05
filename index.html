@@ -112,10 +112,11 @@
     <div id="toast-container"></div>
 
     <div id="app-view">
+    <div id="offline-banner" class="hidden no-print bg-amber-100 border-b border-amber-300 text-amber-900 text-xs font-semibold px-4 py-2 text-center"></div>
     <!-- HEADER CON LOGO SVG VECTORIAL Y ESTILOS CORPORATIVOS -->
-    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-40">
-        <div class="w-full bg-white py-4 px-4 flex justify-center border-b border-slate-100">
-            <svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="158 636 676 232" class="w-full max-h-32 h-auto">
+    <header class="bg-white border-b border-slate-200 shadow-sm md:sticky md:top-0 z-40">
+        <div class="w-full bg-white py-2 md:py-4 px-4 flex justify-center border-b border-slate-100">
+            <svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="158 636 676 232" class="w-full max-h-14 sm:max-h-20 md:max-h-32 h-auto">
               <defs>
                 <style>
                   .st0 { fill: #b4be00; }
@@ -212,7 +213,7 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 space-y-6">
+    <main class="flex-grow max-w-7xl w-full mx-auto px-3 sm:px-4 pt-4 md:pt-6 pb-28 md:pb-6 space-y-4 md:space-y-6">
 
         <!-- FILTROS DE VISUALIZACIÓN INTERACTIVOS -->
         <section class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4 no-print">
@@ -227,38 +228,44 @@
         </section>
 
         <!-- NAVEGACIÓN DE MES Y ACCIONES -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-            <div class="flex items-center gap-3">
-                <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-lg text-slate-600 no-print">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between w-full sm:w-auto gap-3">
+                <button onclick="changeMonth(-1)" aria-label="Mes anterior" class="nav-btn p-2 hover:bg-slate-100 rounded-lg text-slate-600 no-print">
                     <i data-lucide="chevron-left" class="w-5 h-5"></i>
                 </button>
-                <h2 id="current-month-display" class="text-lg font-bold text-slate-800 min-w-[140px] text-center"></h2>
-                <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-lg text-slate-600 no-print">
+                <h2 id="current-month-display" class="text-lg font-bold text-slate-800 min-w-[140px] text-center capitalize"></h2>
+                <button onclick="changeMonth(1)" aria-label="Mes siguiente" class="nav-btn p-2 hover:bg-slate-100 rounded-lg text-slate-600 no-print">
                     <i data-lucide="chevron-right" class="w-5 h-5"></i>
                 </button>
             </div>
-            
-            <div class="flex flex-wrap items-center gap-2">
-                <button onclick="fetchExams()" title="Vuelve a cargar los exámenes desde el servidor (útil si otro profesor ha añadido alguno mientras tenías la página abierta, ya que la web no se actualiza sola en tiempo real)" class="no-print bg-blue-50 hover:bg-blue-100 text-corp-blue border border-sky-200 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+
+            <div class="flex flex-wrap items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
+                <button id="install-btn" onclick="installApp()" class="hidden no-print bg-corp-green/20 hover:bg-corp-green/30 text-slate-800 border border-corp-green px-3 py-2.5 sm:py-2 rounded-lg text-xs font-semibold items-center gap-1.5">
+                    <i data-lucide="download" class="w-4 h-4"></i> Instalar app
+                </button>
+                <button onclick="fetchExams()" title="Vuelve a cargar los exámenes desde el servidor (útil si otro profesor ha añadido alguno mientras tenías la página abierta, ya que la web no se actualiza sola en tiempo real)" class="no-print flex-1 sm:flex-none justify-center bg-blue-50 hover:bg-blue-100 text-corp-blue border border-sky-200 px-3 py-2.5 sm:py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5">
                     <i data-lucide="refresh-cw" class="w-4 h-4"></i> Actualizar
                 </button>
-                <button onclick="openPrintModal()" class="no-print bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-300">
+                <button onclick="openPrintModal()" class="no-print flex-1 sm:flex-none justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2.5 sm:py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-300">
                     <i data-lucide="printer" class="w-4 h-4"></i> Imprimir
                 </button>
             </div>
         </div>
 
         <!-- REJILLA DEL CALENDARIO -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="grid grid-cols-7 bg-slate-50 border-b border-slate-200 text-center font-semibold text-xs text-slate-600 py-2.5 uppercase">
                 <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div class="text-slate-400">Sáb</div><div class="text-slate-400">Dom</div>
             </div>
-            <div id="calendar-grid" class="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-200 bg-slate-200"></div>
+            <div id="calendar-grid" class="grid grid-cols-7 divide-x divide-y divide-slate-200 bg-slate-200"></div>
         </div>
 
-        <div class="flex justify-end pt-2 no-print">
+        <!-- AGENDA EN LISTA (móvil y tablet vertical) -->
+        <div id="calendar-agenda" class="md:hidden space-y-3 no-print"></div>
+
+        <div class="fab-wrap flex justify-end pt-2 no-print">
             <button onclick="openCreateModal()" class="bg-corp-blue hover:bg-corp-darkblue text-white font-medium px-5 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-colors">
-                <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Examen
+                <i data-lucide="plus" class="w-5 h-5 md:w-4 md:h-4"></i> Nuevo Examen
             </button>
         </div>
 
@@ -282,8 +289,8 @@
     <div id="print-view"></div>
 
     <!-- MODAL DE OPCIONES DE IMPRESIÓN -->
-    <div id="print-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden no-print">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+    <div id="print-modal" class="modal-wrap fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden no-print">
+        <div class="modal-card bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
                 <h3 class="text-lg font-bold text-slate-800">¿Qué quieres imprimir?</h3>
                 <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -309,8 +316,8 @@
     </div>
 
     <!-- MODAL DE EDICIÓN / CREACIÓN -->
-    <div id="exam-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden no-print">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+    <div id="exam-modal" class="modal-wrap fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden no-print">
+        <div class="modal-card bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
                 <h3 id="modal-title" class="text-lg font-bold text-slate-800">Gestionar Examen</h3>
                 <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -333,7 +340,7 @@
                     </select>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Clase</label>
                         <select id="class-input" required disabled onchange="onClassChange()" class="w-full px-3 py-1.5 border rounded-lg text-sm bg-slate-100 disabled:cursor-not-allowed">
@@ -548,22 +555,126 @@
         const today = new Date();
         let currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
 
+        const EXAMS_CACHE_KEY = "examenes-cache-v1";
+        let examsLoaded = false;
+
         document.addEventListener("DOMContentLoaded", () => {
             renderTeacherDropdown();
             renderClassFilters();
             renderCalendarSubscribeList();
+
+            // Se pinta al instante lo último guardado en el dispositivo y se refresca desde el servidor.
+            const cached = loadExamsCache();
+            if (cached) { exams = cached.exams; examsLoaded = true; }
+            renderCalendar();
             fetchExams();
+
             lucide.createIcons();
             registerServiceWorker();
+            window.addEventListener("offline", () => showOfflineBanner());
+            window.addEventListener("online", () => { hideOfflineBanner(); fetchExams(); });
+            if (!navigator.onLine) showOfflineBanner();
+            handleLaunchAction();
         });
 
-        function showToast(message, type = "error") {
+        function showToast(message, type = "error", ms = 5000) {
             const container = document.getElementById("toast-container");
             const el = document.createElement("div");
             el.className = `toast ${type === "error" ? "toast-error" : "toast-success"}`;
             el.textContent = message;
             container.appendChild(el);
-            setTimeout(() => el.remove(), 5000);
+            setTimeout(() => el.remove(), ms);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+        }
+
+        // ---------------------------------------------------------------
+        // MODO SIN CONEXIÓN (datos guardados en el dispositivo)
+        // ---------------------------------------------------------------
+        function loadExamsCache() {
+            try {
+                const raw = localStorage.getItem(EXAMS_CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed.exams) ? parsed : null;
+            } catch (e) { return null; }
+        }
+
+        function saveExamsCache() {
+            try { localStorage.setItem(EXAMS_CACHE_KEY, JSON.stringify({ ts: Date.now(), exams })); } catch (e) {}
+        }
+
+        function showOfflineBanner() {
+            const el = document.getElementById("offline-banner");
+            const cached = loadExamsCache();
+            if (cached) {
+                const when = new Date(cached.ts).toLocaleString("es", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+                el.textContent = `Sin conexión: se muestran los últimos exámenes guardados en este dispositivo (${when}).`;
+            } else {
+                el.textContent = "Sin conexión: no se pueden cargar los exámenes todavía.";
+            }
+            el.classList.remove("hidden");
+        }
+
+        function hideOfflineBanner() {
+            document.getElementById("offline-banner").classList.add("hidden");
+        }
+
+        // ---------------------------------------------------------------
+        // INSTALAR COMO APP (PWA)
+        // ---------------------------------------------------------------
+        let deferredInstallPrompt = null;
+
+        function isStandalone() {
+            return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+        }
+
+        function isIOS() {
+            return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        }
+
+        function setInstallButtonVisible(visible) {
+            const btn = document.getElementById("install-btn");
+            btn.classList.toggle("hidden", !visible);
+            btn.classList.toggle("flex", visible);
+        }
+
+        function setupInstallPrompt() {
+            if (isStandalone()) return;
+            window.addEventListener("beforeinstallprompt", (ev) => {
+                ev.preventDefault();
+                deferredInstallPrompt = ev;
+                setInstallButtonVisible(true);
+            });
+            window.addEventListener("appinstalled", () => {
+                deferredInstallPrompt = null;
+                setInstallButtonVisible(false);
+            });
+            if (isIOS()) setInstallButtonVisible(true);
+        }
+
+        async function installApp() {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                try { await deferredInstallPrompt.userChoice; } catch (e) {}
+                deferredInstallPrompt = null;
+                setInstallButtonVisible(false);
+                return;
+            }
+            showToast('Para instalar la app: pulsa el botón Compartir del navegador y elige "Añadir a pantalla de inicio".', "success", 9000);
+        }
+
+        setupInstallPrompt();
+
+        // Acceso directo del icono de la app ("Nuevo examen"): index.html?action=new
+        function handleLaunchAction() {
+            const params = new URLSearchParams(location.search);
+            if (params.get("action") === "new") {
+                openCreateModal();
+                history.replaceState(null, "", location.pathname);
+            }
         }
 
         function renderCalendarSubscribeList() {
@@ -811,10 +922,18 @@
                     content: e.content || e.Content || e.contenido || ""
                 }));
 
+                examsLoaded = true;
+                saveExamsCache();
+                hideOfflineBanner();
                 renderCalendar();
             } catch(e) {
                 console.error("Error al obtener exámenes:", e);
-                showToast("No se pudo conectar con el servidor. Comprueba tu conexión.");
+                examsLoaded = true;
+                if (loadExamsCache()) {
+                    showOfflineBanner();
+                } else {
+                    showToast("No se pudo conectar con el servidor. Comprueba tu conexión.");
+                }
                 renderCalendar();
             }
         }
@@ -826,6 +945,9 @@
             const month = currentDate.getMonth();
             document.getElementById("current-month-display").textContent = `${new Date(year, month).toLocaleString('es', {month: 'long'})} ${year}`;
 
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
             let startingDay = new Date(year, month, 1).getDay() - 1;
             if (startingDay === -1) startingDay = 6;
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -836,16 +958,12 @@
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const cell = document.createElement("div");
                 cell.className = "bg-white min-h-[85px] p-1 flex flex-col gap-1";
-                cell.innerHTML = `<div class="text-[10px] font-bold text-slate-400 text-right">${day}</div>`;
+                const dayNumber = dateStr === todayStr
+                    ? `<span class="inline-block bg-corp-blue text-white rounded-full px-1.5 py-px">${day}</span>`
+                    : day;
+                cell.innerHTML = `<div class="text-[10px] font-bold text-slate-400 text-right">${dayNumber}</div>`;
 
-                const dayExams = exams.filter(e => {
-                    const eDate = normalizeDateStr(e.date);
-                    const matchClass = (selectedClassFilter === "ALL" || e.className === selectedClassFilter);
-                    const matchItinerary = (selectedItineraryFilter === "ALL" || e.itinerary === selectedItineraryFilter);
-                    return eDate === dateStr && matchClass && matchItinerary;
-                });
-
-                dayExams.forEach(e => {
+                examsForDay(dateStr).forEach(e => {
                     const teacherInfo = TEACHER_DATA[e.teacher];
                     const colorClasses = teacherInfo ? teacherInfo.color : "bg-sky-50 border-sky-200 text-slate-800";
 
@@ -861,7 +979,57 @@
                 });
                 grid.appendChild(cell);
             }
+
+            renderAgenda(year, month, daysInMonth, todayStr);
             lucide.createIcons();
+        }
+
+        // Vista en lista del mes (móvil y tablet vertical): solo los días con exámenes.
+        function renderAgenda(year, month, daysInMonth, todayStr) {
+            const agenda = document.getElementById("calendar-agenda");
+            const weekdays = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+            let html = "";
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayExams = examsForDay(dateStr);
+                if (!dayExams.length) continue;
+
+                const isToday = dateStr === todayStr;
+                const cards = dayExams.map(e => {
+                    const teacherInfo = TEACHER_DATA[e.teacher];
+                    const colorClasses = teacherInfo ? teacherInfo.color : "bg-sky-50 border-sky-200 text-slate-800";
+                    return `
+                        <button type="button" data-exam-id="${escapeHtml(e.id)}" class="agenda-card w-full p-3 border rounded-xl shadow-sm ${colorClasses}">
+                            <div class="font-bold text-sm">${escapeHtml(e.subject)}</div>
+                            <div class="text-xs opacity-80 mt-0.5">${escapeHtml(e.className)}${e.itinerary ? " · " + escapeHtml(e.itinerary) : ""}</div>
+                            <div class="text-xs opacity-70">${escapeHtml(e.teacher)}</div>
+                            ${e.content ? `<div class="agenda-clamp text-xs mt-1 opacity-80">${escapeHtml(e.content)}</div>` : ""}
+                        </button>`;
+                }).join("");
+
+                html += `
+                    <div class="flex gap-3">
+                        <div class="w-12 shrink-0 text-center pt-1">
+                            <div class="text-[10px] uppercase font-bold text-slate-400">${weekdays[new Date(year, month, day).getDay()]}</div>
+                            <div class="mx-auto mt-0.5 flex items-center justify-center w-9 h-9 rounded-full text-lg font-bold ${isToday ? "bg-corp-blue text-white" : "text-slate-700"}">${day}</div>
+                        </div>
+                        <div class="flex-1 min-w-0 space-y-2">${cards}</div>
+                    </div>`;
+            }
+
+            if (!html) {
+                const msg = !examsLoaded
+                    ? "Cargando exámenes…"
+                    : "No hay exámenes este mes" + (selectedClassFilter === "ALL" ? "." : " con el filtro seleccionado.");
+                html = `<div class="bg-white border border-slate-200 rounded-xl p-6 text-center text-sm text-slate-500">${msg}</div>`;
+            }
+
+            agenda.innerHTML = html;
+            agenda.onclick = (ev) => {
+                const card = ev.target.closest("[data-exam-id]");
+                if (card) openEditModal(card.dataset.examId);
+            };
         }
 
         function changeMonth(d) { currentDate.setMonth(currentDate.getMonth() + d); renderCalendar(); }
@@ -890,6 +1058,10 @@
 
         async function handleFormSubmit(e) {
             e.preventDefault();
+            if (!navigator.onLine) {
+                showToast("Sin conexión: conéctate a internet para guardar el examen.");
+                return;
+            }
             const btn = document.getElementById("save-submit-btn");
             btn.disabled = true;
             btn.textContent = "Guardando...";
@@ -961,6 +1133,10 @@
         async function deleteCurrentExam() {
             const id = document.getElementById("exam-id-input").value;
             if (!id || !confirm("¿Eliminar este examen?")) return;
+            if (!navigator.onLine) {
+                showToast("Sin conexión: conéctate a internet para eliminar el examen.");
+                return;
+            }
 
             const previousExams = exams.slice();
             exams = exams.filter(x => x.id != id);
@@ -1064,7 +1240,8 @@
             const monthLabel = `${new Date(year, month).toLocaleString('es', {month: 'long'})} ${year}`;
             const weeks = buildWeeksMatrix(year, month);
             const weekdayHeader = `<div class="print-weekday-row">${['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d => `<div class="print-week-header">${d}</div>`).join('')}</div>`;
-            const logoSvg = document.getElementById("Capa_1").outerHTML;
+            // Se quita el atributo class del <svg> (tamaños responsive de pantalla) para que mande el CSS de impresión
+            const logoSvg = document.getElementById("Capa_1").outerHTML.replace(/^<svg([^>]*?)\sclass="[^"]*"/, "<svg$1");
 
             const pageHeader = `
                 <div class="print-header">
