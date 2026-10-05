@@ -32,7 +32,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== SHELL_CACHE && k !== CDN_CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k.startsWith("examenes-") && k !== SHELL_CACHE && k !== CDN_CACHE).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();

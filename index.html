@@ -249,6 +249,9 @@
                 <button onclick="openPrintModal()" class="no-print flex-1 sm:flex-none justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2.5 sm:py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-slate-300">
                     <i data-lucide="printer" class="w-4 h-4"></i> Imprimir
                 </button>
+                <button id="logout-btn" onclick="logout()" title="Olvida la clave del profesorado en este dispositivo" class="hidden no-print flex-1 sm:flex-none justify-center bg-white hover:bg-slate-50 text-slate-600 px-3 py-2.5 sm:py-2 rounded-lg text-xs font-semibold items-center gap-1.5 border border-slate-300">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar sesión
+                </button>
             </div>
         </div>
 
@@ -313,6 +316,23 @@
                 <button type="button" onclick="closePrintModal()" class="self-end px-3 py-1.5 border rounded-lg text-xs mt-1">Cancelar</button>
             </div>
         </div>
+    </div>
+
+    <!-- ACCESO DEL PROFESORADO (clave para crear, editar o borrar) -->
+    <div id="auth-modal" class="modal-wrap fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden no-print">
+        <form id="auth-form" onsubmit="submitClave(event)" class="modal-card bg-white rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800">Acceso del profesorado</h3>
+                <button type="button" onclick="cancelAuth()" aria-label="Cerrar" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">Para añadir, editar o eliminar exámenes introduce la clave del profesorado. Se recordará en este dispositivo hasta que pulses «Cerrar sesión».</p>
+            <input id="auth-input" type="password" autocomplete="off" required placeholder="Clave del profesorado" class="w-full px-3 py-2 border rounded-lg text-sm">
+            <p id="auth-error" class="text-xs font-semibold text-red-600 hidden"></p>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="cancelAuth()" class="px-3 py-1.5 border rounded-lg text-xs">Cancelar</button>
+                <button type="submit" id="auth-submit" class="px-4 py-1.5 bg-corp-blue hover:bg-corp-darkblue text-white rounded-lg text-xs font-semibold">Entrar</button>
+            </div>
+        </form>
     </div>
 
     <!-- MODAL DE EDICIÓN / CREACIÓN -->
@@ -562,6 +582,7 @@
             renderTeacherDropdown();
             renderClassFilters();
             renderCalendarSubscribeList();
+            updateLogoutButton();
 
             // Se pinta al instante lo último guardado en el dispositivo y se refresca desde el servidor.
             const cached = loadExamsCache();
@@ -576,6 +597,108 @@
             if (!navigator.onLine) showOfflineBanner();
             handleLaunchAction();
         });
+
+        // ---------------------------------------------------------------
+        // ACCESO DEL PROFESORADO
+        // El servidor solo acepta cambios si llegan con la clave correcta;
+        // la clave no está en este código: se pide y se recuerda en el dispositivo.
+        // ---------------------------------------------------------------
+        const CLAVE_KEY = "examenes-clave-v1";
+        let memoryClave = "";
+        let authResolver = null;
+
+        function getSavedClave() {
+            if (memoryClave) return memoryClave;
+            try { return localStorage.getItem(CLAVE_KEY) || ""; } catch (e) { return ""; }
+        }
+
+        function saveClave(clave) {
+            memoryClave = clave;
+            try { localStorage.setItem(CLAVE_KEY, clave); } catch (e) {}
+            updateLogoutButton();
+        }
+
+        function forgetClave() {
+            memoryClave = "";
+            try { localStorage.removeItem(CLAVE_KEY); } catch (e) {}
+            updateLogoutButton();
+        }
+
+        function updateLogoutButton() {
+            const logged = Boolean(getSavedClave());
+            const btn = document.getElementById("logout-btn");
+            btn.classList.toggle("hidden", !logged);
+            btn.classList.toggle("flex", logged);
+        }
+
+        function logout() {
+            forgetClave();
+            showToast("Sesión cerrada en este dispositivo.", "success");
+        }
+
+        function ensureClave() {
+            if (getSavedClave()) return Promise.resolve(true);
+            return new Promise((resolve) => {
+                authResolver = resolve;
+                document.getElementById("auth-input").value = "";
+                document.getElementById("auth-error").classList.add("hidden");
+                document.getElementById("auth-modal").classList.remove("hidden");
+                document.getElementById("auth-input").focus();
+            });
+        }
+
+        function cancelAuth() {
+            document.getElementById("auth-modal").classList.add("hidden");
+            if (authResolver) { authResolver(false); authResolver = null; }
+        }
+
+        async function submitClave(ev) {
+            ev.preventDefault();
+            const clave = document.getElementById("auth-input").value;
+            const btn = document.getElementById("auth-submit");
+            const errorEl = document.getElementById("auth-error");
+            errorEl.classList.add("hidden");
+            btn.disabled = true;
+            btn.textContent = "Comprobando...";
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "auth", clave })
+                });
+                const result = await res.json();
+                if (result.status === "success") {
+                    saveClave(clave);
+                    document.getElementById("auth-modal").classList.add("hidden");
+                    if (authResolver) { authResolver(true); authResolver = null; }
+                    return;
+                }
+                errorEl.textContent = result.message || "No se pudo comprobar la clave.";
+            } catch (e) {
+                errorEl.textContent = "No se pudo conectar con el servidor.";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Entrar";
+            }
+            errorEl.classList.remove("hidden");
+        }
+
+        // Envía un cambio al servidor adjuntando la clave.
+        // Content-Type "text/plain" evita el preflight CORS que Apps Script no soporta,
+        // pero sí permite leer la respuesta (a diferencia de mode:"no-cors").
+        async function sendToServer(body) {
+            const res = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ ...body, clave: getSavedClave() })
+            });
+            const result = await res.json();
+            if (result.status !== "success" && result.code === "unauthorized") {
+                forgetClave();
+                result.message = "La clave no es válida o ha cambiado. Se te volverá a pedir al hacer el siguiente cambio.";
+            }
+            return result;
+        }
 
         function showToast(message, type = "error", ms = 5000) {
             const container = document.getElementById("toast-container");
@@ -1034,7 +1157,8 @@
 
         function changeMonth(d) { currentDate.setMonth(currentDate.getMonth() + d); renderCalendar(); }
 
-        function openCreateModal() {
+        async function openCreateModal() {
+            if (!(await ensureClave())) return;
             document.getElementById("exam-id-input").value = "";
             document.getElementById("exam-form").reset();
             onTeacherChange();
@@ -1042,9 +1166,10 @@
             document.getElementById("exam-modal").classList.remove("hidden");
         }
 
-        function openEditModal(id) {
+        async function openEditModal(id) {
             const e = exams.find(x => x.id == id);
             if (!e) return;
+            if (!(await ensureClave())) return;
             document.getElementById("exam-id-input").value = e.id;
             document.getElementById("teacher-input").value = e.teacher || "";
             onTeacherChange(e.subject, e.className, e.itinerary);
@@ -1055,6 +1180,10 @@
         }
 
         function closeModal() { document.getElementById("exam-modal").classList.add("hidden"); }
+
+        document.addEventListener("keydown", (ev) => {
+            if (ev.key === "Escape" && !document.getElementById("auth-modal").classList.contains("hidden")) cancelAuth();
+        });
 
         async function handleFormSubmit(e) {
             e.preventDefault();
@@ -1099,19 +1228,7 @@
             closeModal();
 
             try {
-                const payload = JSON.stringify({
-                    action: isEdit ? "update" : "create",
-                    exam: examData
-                });
-
-                // Content-Type "text/plain" evita el preflight CORS que Apps Script no soporta,
-                // pero sí permite leer la respuesta (a diferencia de mode:"no-cors").
-                const res = await fetch(API_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: payload
-                });
-                const result = await res.json();
+                const result = await sendToServer({ action: isEdit ? "update" : "create", exam: examData });
 
                 if (result.status !== "success") {
                     throw new Error(result.message || "El servidor rechazó el cambio.");
@@ -1144,14 +1261,7 @@
             closeModal();
 
             try {
-                const payload = JSON.stringify({ action: "delete", id: id });
-
-                const res = await fetch(API_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: payload
-                });
-                const result = await res.json();
+                const result = await sendToServer({ action: "delete", id: id });
 
                 if (result.status !== "success") {
                     throw new Error(result.message || "El servidor rechazó la eliminación.");
